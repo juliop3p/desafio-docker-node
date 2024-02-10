@@ -6,13 +6,15 @@ services:
     build: 
       context: ./node
     restart: always
+    entrypoint: sh -c "npm i && node index.js"
     networks:
       - node-network
     volumes:
       - ./node:/usr/src/app
     tty: true
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: mysql:5.7
@@ -27,6 +29,11 @@ services:
       - MYSQL_ROOT_PASSWORD=root
     networks:
       - node-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
 
   nginx:
     build: 
